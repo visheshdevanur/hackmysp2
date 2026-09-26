@@ -3,6 +3,7 @@ import { currentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { scoreReview, calculatePRI, priCorrectness } from '@/lib/scoring';
 import { credentialForClient } from '@/lib/repo-quiz';
+import { challengeForClient } from '@/lib/challenge-data';
 
 export async function GET() {
   const user = await currentUser();
@@ -14,9 +15,9 @@ export async function GET() {
     prisma.credential.findMany({ where: { quizAttemptStatus: 'failed' }, include: { user: { select: { name: true, githubUsername: true } }, challenge: true, quizRecordings: { select: { segmentIndex: true } } }, orderBy: { quizAttemptFinishedAt: 'desc' } }),
   ]);
   return NextResponse.json({
-    pending: pending.map(({ user: submitter, challenge, ...credential }) => ({ ...credentialForClient(credential, { includeSpeaking: true }), user: submitter, challenge })),
-    completed: completed.map(review => ({ ...review, credential: { ...credentialForClient(review.credential, { includeSpeaking: true }), challenge: review.credential.challenge, user: review.credential.user } })),
-    integrityFlags: integrityFlags.map(({ user: submitter, challenge, ...credential }) => ({ ...credentialForClient(credential, { includeSpeaking: true }), user: submitter, challenge })),
+    pending: pending.map(({ user: submitter, challenge, ...credential }) => ({ ...credentialForClient({ ...credential, challenge }, { includeSpeaking: true, includeQuiz: true, viewerRole: 'reviewer' }), user: submitter })),
+    completed: completed.map(review => ({ ...review, credential: { ...credentialForClient(review.credential, { includeSpeaking: true, includeQuiz: true, viewerRole: 'reviewer' }), challenge: challengeForClient(review.credential.challenge, 'reviewer'), user: review.credential.user } })),
+    integrityFlags: integrityFlags.map(({ user: submitter, challenge, ...credential }) => ({ ...credentialForClient({ ...credential, challenge }, { includeSpeaking: true, includeQuiz: true, viewerRole: 'reviewer' }), user: submitter })),
   });
 }
 

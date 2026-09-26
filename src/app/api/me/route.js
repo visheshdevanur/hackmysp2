@@ -22,5 +22,5 @@ export async function GET() {
   const pri = calculatePRI({ correctness: priCorrectness(verified), review: average(verified, 'reviewerScore'), timeliness: average(verified, 'timeliness'), learning: average(verified, 'learningVelocity'), skillMatch: average(verified, 'skillMatch') });
   let codePrint = null;
   try { codePrint = user.codePrint ? JSON.parse(user.codePrint) : null; } catch { codePrint = null; }
-  return NextResponse.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, image: user.image, githubUsername: user.githubUsername, codePrint, isVerified: user.isVerified }, credentials: user.credentials.map(credential => credentialForClient(credential, { includeSpeaking: true })), pri: { ...pri, tier: pri.score >= 90 ? 'Exceptional' : pri.score >= 75 ? 'Proficient' : pri.score >= 60 ? 'Developing' : 'Building' } });
+  return NextResponse.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, image: user.image, githubUsername: user.githubUsername, codePrint, isVerified: user.isVerified }, credentials: user.credentials.map(credential => credentialForClient(credential, { includeSpeaking: true, includeQuiz: true, viewerRole: user.role })), pri: { ...pri, tier: pri.score >= 90 ? 'Exceptional' : pri.score >= 75 ? 'Proficient' : pri.score >= 60 ? 'Developing' : 'Building' } });
 }

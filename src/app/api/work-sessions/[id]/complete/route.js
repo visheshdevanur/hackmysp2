@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { githubApiHeaders } from '@/lib/github-auth';
 import { evaluateTimedSession } from '@/lib/session-evaluation';
 import { publicQuiz } from '@/lib/repo-quiz';
+import { buildChallengeQuiz } from '@/lib/challenge-quiz';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -32,6 +33,7 @@ export async function POST(request, { params }) {
     await prisma.workSession.update({ where: { id: session.id }, data: { status: 'analyzing', repoUrl: repositoryUrl, analysisError: null } });
     const headers = await githubApiHeaders(user.id);
     const assessment = await evaluateTimedSession({ session, repositoryUrl, headers });
+    const questions = await buildChallengeQuiz({ challenge: session.challenge, evidenceQuestions: assessment.questions });
     const commitsRes = await fetch(`https://api.github.com/repos/${encodeURIComponent(assessment.repoFullName.split('/')[0])}/${encodeURIComponent(assessment.repoFullName.split('/')[1])}/commits?per_page=100`, { headers, cache: 'no-store' });
     const commits = commitsRes.ok ? await commitsRes.json() : [];
     const credential = await prisma.credential.create({ data: {
@@ -41,7 +43,7 @@ export async function POST(request, { params }) {
       repoCommitSha: assessment.commitSha,
       submissionMode: `recorded-session-${session.id}`,
       aiModel: assessment.model,
-      quizJson: JSON.stringify(assessment.questions),
+      quizJson: JSON.stringify(questions),
       commits: Array.isArray(commits) ? commits.length : 0,
       daysTaken: 0,
       isVerified: false,
@@ -49,7 +51,7 @@ export async function POST(request, { params }) {
     await prisma.workSession.update({ where: { id: session.id }, data: { status: 'submitted', credentialId: credential.id, repoCommitSha: assessment.commitSha, analysisJson: JSON.stringify(assessment.report), analysisModel: assessment.model, analysisError: null, completedAt: new Date() } });
     return NextResponse.json({
       credential: { id: credential.id, quizAvailable: true },
-      quiz: { questions: publicQuiz(assessment.questions) },
+      quiz: { questions: publicQuiz(questions) },
       analysis: assessment.report,
       model: assessment.model,
     }, { status: 201 });

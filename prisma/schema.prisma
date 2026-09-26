@@ -71,6 +71,8 @@ model Challenge {
   difficulty   String
   role         String
   requirements String       @default("[]")
+  jobDetailsJson String     @default("{}")
+  priQuestionConfigJson String @default("{}")
   creatorId    String
   companyName  String?
   deadline     DateTime?

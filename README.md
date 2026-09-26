@@ -29,7 +29,9 @@ Set `REVIEWER_INVITE_CODE` and `RECRUITER_INVITE_CODE` in `.env` before creating
 
 ## Public repository quiz and AI provider
 
-Students submit a public GitHub URL; GitHub OAuth is not required for challenge submissions. The server pins the repository revision, reads a small bounded set of README/source/config/test files without running them, and generates eight project-specific multiple-choice questions with Gemini 3.5 Flash-Lite by default. Every question must cite an exact quote from a supplied file; the server validates that quote and derives its line numbers. The answer key stays server-side until the attempt is submitted. AI-generated-code detection is not performed.
+Recruiters define each job’s technical or non-technical field, experience level, responsibilities, skills, work arrangement, employment details, and optional compensation and qualifications. They configure a PRI quiz of 1–50 questions, allocating each question to GitHub/recording-grounded AI, job/role AI, or a recruiter-authored question with four options and an answer key. Allocations must add up to the total. The server validates recruiter questions and generates only the configured AI groups. Repository-grounded answers cite exact source quotes; timed submissions can also cite observable recording evidence. Questions are shuffled and delivered one at a time. Developers never receive the answer key before completing the quiz; recruiters and reviewers can see the setup and results.
+
+Students submit a public GitHub URL; GitHub OAuth is not required for challenge submissions. The server pins the repository revision and reads a small bounded set of README/source/config/test files without running them. AI-generated-code detection is not performed.
 
 Create a Gemini API key in [Google AI Studio](https://aistudio.google.com/apikey) and add it to the local `.env` file (never commit or paste it into chat):
 

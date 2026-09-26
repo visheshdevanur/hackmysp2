@@ -11,10 +11,10 @@ export async function GET(_request, { params }) {
   if (!challenge) return NextResponse.json({ error: 'Challenge not found.' }, { status: 404 });
   const rows = await prisma.credential.findMany({
     where: { challengeId: challenge.id },
-    include: { user: { select: { name: true, githubUsername: true } }, quizRecordings: { select: { segmentIndex: true } }, workSession: { include: { recordings: { select: { segmentIndex: true }, orderBy: [{ segmentIndex: 'asc' }] } } } },
+    include: { user: { select: { name: true, githubUsername: true } }, challenge: true, quizRecordings: { select: { segmentIndex: true } }, workSession: { include: { recordings: { select: { segmentIndex: true }, orderBy: [{ segmentIndex: 'asc' }] } } } },
     orderBy: { createdAt: 'desc' },
   });
-  return NextResponse.json(rows.map(row => ({ ...credentialForClient(row, { includeSpeaking: true }), user: row.user, workSession: row.workSession ? {
+  return NextResponse.json(rows.map(row => ({ ...credentialForClient(row, { includeSpeaking: true, includeQuiz: true, viewerRole: 'recruiter' }), user: row.user, workSession: row.workSession ? {
     id: row.workSession.id,
     status: row.workSession.status,
     analysisJson: row.workSession.analysisJson,

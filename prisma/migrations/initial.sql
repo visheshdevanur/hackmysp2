@@ -59,6 +59,8 @@ CREATE TABLE "Challenge" (
     "difficulty" TEXT NOT NULL,
     "role" TEXT NOT NULL,
     "requirements" TEXT NOT NULL DEFAULT '[]',
+    "jobDetailsJson" TEXT NOT NULL DEFAULT '{}',
+    "priQuestionConfigJson" TEXT NOT NULL DEFAULT '{}',
     "creatorId" TEXT NOT NULL,
     "companyName" TEXT,
     "deadline" DATETIME,

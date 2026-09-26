@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server';
 import { currentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { githubApiHeaders } from '@/lib/github-auth';
-import { generateRepositoryQuiz, publicQuiz } from '@/lib/repo-quiz';
+import { publicQuiz } from '@/lib/repo-quiz';
+import { buildChallengeQuiz } from '@/lib/challenge-quiz';
+import { getPriQuestionConfig } from '@/lib/challenge-data';
 
 export async function POST(request) {
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
   if (user.role !== 'student') return NextResponse.json({ error: 'Student account required.' }, { status: 403 });
-  if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: 'AI quiz generation is not configured yet. Add GEMINI_API_KEY to the server .env file.' }, { status: 503 });
   try {
     const { challengeId, githubRepoUrl } = await request.json();
     const parsed = new URL(String(githubRepoUrl));
@@ -18,6 +19,8 @@ export async function POST(request) {
     }
     const challenge = await prisma.challenge.findFirst({ where: { id: challengeId, isActive: true } });
     if (!challenge) return NextResponse.json({ error: 'This challenge is not available.' }, { status: 404 });
+    const questionConfig = getPriQuestionConfig(challenge);
+    if (questionConfig.evidenceQuestionCount + questionConfig.jobQuestionCount > 0 && !process.env.GEMINI_API_KEY) return NextResponse.json({ error: 'This challenge needs Gemini-generated PRI questions, but AI quiz generation is not configured.' }, { status: 503 });
     const recentStart = new Date(Date.now() - 60 * 60 * 1000);
     const recentQuizzes = await prisma.credential.count({ where: { userId: user.id, aiModel: { not: null }, createdAt: { gte: recentStart } } });
     if (recentQuizzes >= 3) return NextResponse.json({ error: 'You have reached the limit of three repository quizzes per hour. Try again later.' }, { status: 429 });
@@ -36,19 +39,18 @@ export async function POST(request) {
     if (existing) return NextResponse.json({ error: 'You have already submitted this challenge at this repository revision.' }, { status: 409 });
     const commitsRes = await fetch(`https://api.github.com/repos/${repo}/commits?per_page=100`, { headers, cache: 'no-store' });
     const commits = commitsRes.ok ? await commitsRes.json() : [];
-    const requirements = (() => { try { return JSON.parse(challenge.requirements); } catch { return []; } })();
-    const quiz = await generateRepositoryQuiz({
+    const quizQuestions = await buildChallengeQuiz({
+      challenge,
       owner,
       repository: repository.name,
-      challenge: { title: challenge.title, description: challenge.description, requirements: requirements.join(', ') },
       ref: latestCommit.sha,
       headers,
     });
     const daysTaken = 0;
-    const credential = await prisma.credential.create({ data: { userId: user.id, challengeId, githubRepoUrl: repository.html_url, repoCommitSha: quiz.commitSha, aiModel: quiz.model, quizJson: JSON.stringify(quiz.questions), commits: commits.length, daysTaken, isVerified: false } });
+    const credential = await prisma.credential.create({ data: { userId: user.id, challengeId, githubRepoUrl: repository.html_url, repoCommitSha: latestCommit.sha, aiModel: questionConfig.evidenceQuestionCount + questionConfig.jobQuestionCount > 0 ? (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite') : null, quizJson: JSON.stringify(quizQuestions), commits: commits.length, daysTaken, isVerified: false } });
     return NextResponse.json({
       credential: { id: credential.id, githubRepoUrl: credential.githubRepoUrl, commits: credential.commits, quizAvailable: true },
-      quiz: { commitSha: quiz.commitSha, model: quiz.model, questions: publicQuiz(quiz.questions) },
+      quiz: { commitSha: latestCommit.sha, questions: publicQuiz(quizQuestions) },
       evidence: { repository: repository.full_name, commits: commits.length, createdAt: repository.created_at, latestCommitAt: commits[0]?.commit?.author?.date || null },
     }, { status: 201 });
   } catch (error) {
