@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String       @id @default(cuid())
+  name           String?
+  email          String?      @unique
+  emailVerified  DateTime?
+  passwordHash   String?
+  image          String?
+  githubId       String?      @unique
+  githubUsername String?      @unique
+  role           String       @default("student")
+  priScore       Int          @default(0)
+  codePrint      String?
+  expertise      String       @default("[]")
+  companyName    String?
+  isVerified     Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  credentials    Credential[]
+  reviews        Review[]
+  challenges     Challenge[]  @relation("ChallengeCreator")
+  workSessions   WorkSession[] @relation("WorkSessionDeveloper")
+  accounts       Account[]
+  sessions       Session[]
+}
+
+model Account {
+  id                 String @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+  user               User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+}
+
+model Challenge {
+  id           String       @id @default(cuid())
+  title        String
+  description  String
+  difficulty   String
+  role         String
+  requirements String       @default("[]")
+  creatorId    String
+  companyName  String?
+  deadline     DateTime?
+  sessionDurationMinutes Int @default(60)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  creator      User         @relation("ChallengeCreator", fields: [creatorId], references: [id])
+  credentials  Credential[]
+  workSessions WorkSession[]
+}
+
+model Credential {
+  id               String   @id @default(cuid())
+  userId           String
+  challengeId      String
+  githubRepoUrl    String
+  submissionMode  String   @default("repository")
+  repoCommitSha   String?
+  aiModel         String?
+  quizJson        String?
+  quizScore       Int?
+  quizAnswers     String?
+  quizSubmittedAt DateTime?
+  quizAttemptStatus String @default("ready")
+  quizAttemptStartedAt DateTime?
+  quizAttemptFinishedAt DateTime?
+  quizAttemptDataJson String?
+  speakingStatus String @default("ready")
+  speakingStartedAt DateTime?
+  speakingFinishedAt DateTime?
+  speakingDataJson String?
+  speakingResultJson String?
+  commits          Int      @default(0)
+  daysTaken        Int      @default(0)
+  codeQuality      Float    @default(0)
+  peerReviewAvg    Float    @default(0)
+  timeliness       Float    @default(0)
+  learningVelocity Float    @default(0)
+  skillMatch       Float    @default(0)
+  priScore         Int      @default(0)
+  reviewerScore    Int      @default(0)
+  verificationCode String   @unique @default(cuid())
+  isVerified       Boolean  @default(false)
+  isFlagged        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge        Challenge @relation(fields: [challengeId], references: [id])
+  reviews          Review[]
+  workSession      WorkSession?
+  quizRecordings   PriQuizRecording[]
+  @@unique([userId, challengeId, repoCommitSha, submissionMode])
+}
+
+model Review {
+  id               String     @id @default(cuid())
+  userId           String
+  credentialId     String
+  correctness      Int
+  codeStructure    Int
+  documentation   Int
+  edgeCaseHandling Int
+  innovation       Int
+  comment          String?
+  calculatedScore  Int
+  credibilityWeight Float     @default(1)
+  isFlagged        Boolean    @default(false)
+  createdAt        DateTime   @default(now())
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credential       Credential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+  @@unique([userId, credentialId])
+}
+
+model WorkSession {
+  id               String @id @default(cuid())
+  userId           String
+  challengeId      String
+  credentialId     String? @unique
+  status           String @default("ready")
+  durationSeconds  Int
+  elapsedSeconds   Int @default(0)
+  segmentCount     Int @default(0)
+  lastHeartbeatAt  DateTime?
+  repoUrl          String?
+  repoCommitSha    String?
+  analysisJson     String?
+  analysisModel    String?
+  analysisError    String?
+  privacyAcceptedAt DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  completedAt      DateTime?
+  user             User @relation("WorkSessionDeveloper", fields: [userId], references: [id], onDelete: Cascade)
+  challenge        Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  credential       Credential? @relation(fields: [credentialId], references: [id], onDelete: SetNull)
+  recordings       WorkSessionRecording[]
+  @@index([userId, status])
+  @@index([challengeId, status])
+}
+
+model WorkSessionRecording {
+  id             String @id @default(cuid())
+  workSessionId  String
+  segmentIndex   Int
+  chunkIndex     Int
+  filePath       String
+  mimeType       String
+  byteSize       Int
+  createdAt      DateTime @default(now())
+  workSession    WorkSession @relation(fields: [workSessionId], references: [id], onDelete: Cascade)
+  @@unique([workSessionId, segmentIndex, chunkIndex])
+  @@index([workSessionId, segmentIndex])
+}
+
+model PriQuizRecording {
+  id           String @id @default(cuid())
+  credentialId String
+  segmentIndex Int
+  chunkIndex   Int
+  filePath     String
+  mimeType     String
+  byteSize     Int
+  createdAt    DateTime @default(now())
+  credential   Credential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+  @@unique([credentialId, segmentIndex, chunkIndex])
+  @@index([credentialId, segmentIndex])
+}
