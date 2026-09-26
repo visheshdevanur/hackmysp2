@@ -131,11 +131,18 @@ export async function evaluateTimedSession({ session, repositoryUrl, headers }) 
   const owner = decodeURIComponent(parts[0]);
   const repoName = decodeURIComponent(parts[1].replace(/\.git$/, ''));
   const repoResponse = await upstreamFetch(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repoName)}`, { headers, cache: 'no-store', signal: AbortSignal.timeout(15_000) }, 'GitHub');
-  if (!repoResponse.ok) throw new Error(repoResponse.status === 404 ? 'GitHub could not find this public repository.' : 'GitHub could not verify the submitted repository right now. Try again shortly.');
+  if (!repoResponse.ok) {
+    if (repoResponse.status === 404) throw new Error('GitHub could not find this public repository. Check the owner and repository name, and confirm the repository is public.');
+    if (repoResponse.status === 403 && (repoResponse.headers.get('x-ratelimit-remaining') === '0' || /rate limit exceeded/i.test(await repoResponse.clone().text().catch(() => '')))) throw new Error('GitHub’s unauthenticated API rate limit is exhausted. Add a read-only GitHub token as GITHUB_TOKEN in the server .env file, restart the app, and retry. Your recording is saved.');
+    throw new Error(`GitHub could not verify the submitted repository (HTTP ${repoResponse.status}). Your recording is saved; retry when GitHub access is available.`);
+  }
   const repo = await repoResponse.json();
   if (!repo.full_name || repo.private) throw new Error('The submitted repository must be public.');
   const latestResponse = await upstreamFetch(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo.name)}/commits/${encodeURIComponent(repo.default_branch)}`, { headers, cache: 'no-store', signal: AbortSignal.timeout(15_000) }, 'GitHub');
-  if (!latestResponse.ok) throw new Error('GitHub could not read the submitted repository revision.');
+  if (!latestResponse.ok) {
+    if (latestResponse.status === 403 && (latestResponse.headers.get('x-ratelimit-remaining') === '0' || /rate limit exceeded/i.test(await latestResponse.clone().text().catch(() => '')))) throw new Error('GitHub’s unauthenticated API rate limit is exhausted. Add a read-only GitHub token as GITHUB_TOKEN in the server .env file, restart the app, and retry. Your recording is saved.');
+    throw new Error(`GitHub could not read the submitted repository revision (HTTP ${latestResponse.status}).`);
+  }
   const latestCommit = await latestResponse.json();
   const { files } = await readRepositorySources({ owner, repository: repo.name, ref: latestCommit.sha, headers });
 
@@ -210,6 +217,7 @@ export async function evaluateTimedSession({ session, repositoryUrl, headers }) 
     if (!evidence) return null;
     return { id: `q${index + 1}`, question: item.question.trim(), options, correctIndex: item.correctIndex, explanation: String(item.explanation || '').trim(), evidence };
   }).filter(Boolean);
-  if (questions.length !== evidenceQuestionCount) throw new Error(`The recording and repository yielded ${questions.length} verifiable questions, but ${evidenceQuestionCount} are configured. Retry with a longer recording or ask the recruiter to adjust the evidence question count.`);
+  // Return every grounded question. The submission pipeline can safely fill a shortfall
+  // with separately verified repository questions instead of discarding the analysis.
   return { report, questions, commitSha: latestCommit.sha, model: usedModel, repoFullName: repo.full_name };
 }

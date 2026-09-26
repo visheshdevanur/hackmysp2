@@ -13,7 +13,8 @@ export async function POST(request, { params }) {
   if (user.role !== 'student') return NextResponse.json({ error: 'Student account required.' }, { status: 403 });
   const session = await prisma.workSession.findFirst({ where: { id: params.id, userId: user.id, status: { in: ['active', 'paused'] } } });
   if (!session) return NextResponse.json({ error: 'This recording session is not active.' }, { status: 409 });
-  if (session.status === 'paused' && Date.now() - new Date(session.updatedAt).getTime() > 45_000) return NextResponse.json({ error: 'This session is paused; resume screen sharing before saving more video.' }, { status: 409 });
+  // A paused session may still have an in-flight MediaRecorder chunk. Accept late chunks
+  // until submission starts; the segment and chunk indexes remain constrained below.
   const url = new URL(request.url);
   const segmentIndex = Number(url.searchParams.get('segment'));
   const chunkIndex = Number(url.searchParams.get('chunk'));

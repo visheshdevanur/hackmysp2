@@ -4,20 +4,27 @@ import { prisma } from '@/lib/db';
 import { scoreReview, calculatePRI, priCorrectness } from '@/lib/scoring';
 import { credentialForClient } from '@/lib/repo-quiz';
 import { challengeForClient } from '@/lib/challenge-data';
+import { rankChallengeCredentials } from '@/lib/challenge-scores';
+import { challengeScoreBreakdown } from '@/lib/challenge-scores';
 
 export async function GET() {
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
   if (user.role !== 'reviewer') return NextResponse.json({ error: 'Reviewer account required.' }, { status: 403 });
-  const [pending, completed, integrityFlags] = await Promise.all([
-    prisma.credential.findMany({ where: { isVerified: false, isFlagged: false, NOT: { userId: user.id }, reviews: { none: { userId: user.id } } }, include: { user: { select: { name: true, githubUsername: true } }, challenge: true, quizRecordings: { select: { segmentIndex: true } }, workSession: { include: { recordings: { select: { segmentIndex: true } } } } }, orderBy: { createdAt: 'asc' } }),
+  const [pending, completed, integrityFlags, allForRanking] = await Promise.all([
+    prisma.credential.findMany({ where: { isVerified: false, isFlagged: false, NOT: { userId: user.id }, reviews: { none: { userId: user.id } } }, include: { user: { select: { name: true, githubUsername: true } }, challenge: true, reviews: { select: { id: true } }, quizRecordings: { select: { segmentIndex: true } }, workSession: { include: { recordings: { select: { segmentIndex: true } } } } }, orderBy: { createdAt: 'asc' } }),
     prisma.review.findMany({ where: { userId: user.id }, include: { credential: { include: { challenge: true, user: { select: { name: true } }, quizRecordings: { select: { segmentIndex: true } }, workSession: { include: { recordings: { select: { segmentIndex: true } } } } } } }, orderBy: { createdAt: 'desc' } }),
-    prisma.credential.findMany({ where: { quizAttemptStatus: 'failed' }, include: { user: { select: { name: true, githubUsername: true } }, challenge: true, quizRecordings: { select: { segmentIndex: true } } }, orderBy: { quizAttemptFinishedAt: 'desc' } }),
+    prisma.credential.findMany({ where: { OR: [{ quizAttemptStatus: 'failed' }, { speakingStatus: 'failed' }, { quizAttemptStatus: 'in_progress' }, { speakingStatus: 'in_progress' }, { quizAttemptStatus: 'completed' }, { speakingStatus: 'completed' }, { speakingStatus: 'timed_out' }] }, include: { user: { select: { name: true, githubUsername: true } }, challenge: true, quizRecordings: { select: { segmentIndex: true } } }, orderBy: { quizAttemptFinishedAt: 'desc' } }),
+    prisma.credential.findMany({ where: { isFlagged: false }, include: { user: { select: { name: true, githubUsername: true } }, challenge: { select: { id: true, title: true, role: true, difficulty: true } }, reviews: { select: { id: true } }, workSession: { select: { analysisJson: true } } }, orderBy: { createdAt: 'asc' } }),
   ]);
+  const grouped = allForRanking.reduce((groups, item) => { (groups[item.challengeId] ||= { challenge: item.challenge, rows: [] }).rows.push(item); return groups; }, {});
   return NextResponse.json({
-    pending: pending.map(({ user: submitter, challenge, ...credential }) => ({ ...credentialForClient({ ...credential, challenge }, { includeSpeaking: true, includeQuiz: true, viewerRole: 'reviewer' }), user: submitter })),
+    pending: pending.map(({ user: submitter, challenge, ...credential }) => ({ ...credentialForClient({ ...credential, challenge }, { includeSpeaking: true, includeQuiz: true, viewerRole: 'reviewer' }), reviewCount: credential.reviews.length, scores: challengeScoreBreakdown(credential, credential.reviews.length), user: submitter }))
+      .sort((a, b) => (a.user.name || a.user.githubUsername || '').localeCompare(b.user.name || b.user.githubUsername || '') || a.challenge.title.localeCompare(b.challenge.title)),
     completed: completed.map(review => ({ ...review, credential: { ...credentialForClient(review.credential, { includeSpeaking: true, includeQuiz: true, viewerRole: 'reviewer' }), challenge: challengeForClient(review.credential.challenge, 'reviewer'), user: review.credential.user } })),
-    integrityFlags: integrityFlags.map(({ user: submitter, challenge, ...credential }) => ({ ...credentialForClient({ ...credential, challenge }, { includeSpeaking: true, includeQuiz: true, viewerRole: 'reviewer' }), user: submitter })),
+    integrityFlags: integrityFlags.map(({ user: submitter, challenge, ...credential }) => ({ ...credentialForClient({ ...credential, challenge }, { includeSpeaking: true, includeQuiz: true, viewerRole: 'reviewer' }), user: submitter })).filter(item => item.quizAttemptStatus === 'failed' || item.speakingStatus === 'failed' || [...(item.quizIntegrityEvents || []), ...(item.speakingData?.integrityEvents || [])].some(event => ['face_missing', 'multiple_faces'].includes(event.type))),
+    leaderboards: Object.values(grouped).map(group => ({ challenge: group.challenge, entries: rankChallengeCredentials(group.rows).map(row => ({ id: row.id, rank: row.rank, scores: row.scores, user: row.user })) }))
+      .sort((a, b) => a.challenge.title.localeCompare(b.challenge.title) || String(a.challenge.role || '').localeCompare(String(b.challenge.role || ''))),
   });
 }
 

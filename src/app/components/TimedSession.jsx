@@ -249,8 +249,14 @@ export default function TimedSession({ challenge, onClose, onComplete }) {
       if (!session?.id) throw new Error('Start the session and save a recording before submitting.');
       const result = await api(`/api/work-sessions/${encodeURIComponent(session.id)}/complete`, { method: 'POST', body: JSON.stringify({ githubRepoUrl: repoUrl }) });
       setAnalysis(result.analysis);
-      setNotice(`Recording analyzed with ${result.model}. Complete the combined video and repository PRI quiz.`);
-      if (result.credential?.id) onComplete(result.credential.id);
+      if (result.analysisPending) {
+        setSession(previous => previous ? { ...previous, status: 'submitted' } : previous);
+        setError('');
+        setNotice('Submission saved. ' + result.error + ' Retry analysis when GitHub/network access is available.');
+      } else {
+        setNotice(`Recording analyzed with ${result.model}. Complete the combined video and repository PRI quiz.`);
+        if (result.credential?.id && result.credential.quizAvailable) onComplete(result.credential.id);
+      }
     } catch (err) { setError(err.message); }
     finally { setBusy(false); }
   }
@@ -281,7 +287,7 @@ export default function TimedSession({ challenge, onClose, onComplete }) {
       </div></>}
       {recording&&<button type="button" className="button secondary" onClick={pauseCapture}><Pause size={14}/> Pause and save session</button>}
       <label className="real-label timed-repo">Public GitHub repository<input type="url" value={repoUrl} onChange={e=>setRepoUrl(e.target.value)} placeholder="https://github.com/owner/repository"/></label>
-      <button type="button" className="button" onClick={finish} disabled={busy||!repoUrl}>{busy?'Analyzing recording and repository…':<><Square size={14}/> {recording?'Stop, submit repository & analyze':'Submit saved recording & analyze'}</>}</button>
+      <button type="button" className="button" onClick={finish} disabled={busy||!repoUrl}>{busy?'Saving submission and analyzing…':<><Square size={14}/> {recording?'Stop, submit repository & analyze':session?.status==='submitted'?'Retry AI analysis':'Submit saved recording & analyze'}</>}</button>
       <small className="timed-session-foot"><Camera size={13}/><Mic size={13}/> Camera and microphone permissions are required. Closing this tab pauses the timer; previously uploaded recording parts are retained for resume.</small>
     </>}
     {(error||notice)&&<div className={error?'auth-error':'real-notice'} role="status">{error||notice}</div>}

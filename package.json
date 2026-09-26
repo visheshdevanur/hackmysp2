@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "db:setup": "node src/scripts/init-sqlite.mjs",
+    "db:setup": "prisma db push",
     "db:generate": "prisma generate",
     "db:migrate:deploy": "prisma migrate deploy"
   },

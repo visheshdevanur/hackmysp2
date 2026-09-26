@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -29,6 +28,8 @@ model User {
   reviews        Review[]
   challenges     Challenge[]  @relation("ChallengeCreator")
   workSessions   WorkSession[] @relation("WorkSessionDeveloper")
+  sentInterviewInvitations InterviewInvitation[] @relation("InvitationRecruiter")
+  interviewInvitations InterviewInvitation[] @relation("InvitationCandidate")
   accounts       Account[]
   sessions       Session[]
 }
@@ -83,6 +84,7 @@ model Challenge {
   creator      User         @relation("ChallengeCreator", fields: [creatorId], references: [id])
   credentials  Credential[]
   workSessions WorkSession[]
+  interviewInvitations InterviewInvitation[]
 }
 
 model Credential {
@@ -125,6 +127,7 @@ model Credential {
   reviews          Review[]
   workSession      WorkSession?
   quizRecordings   PriQuizRecording[]
+  interviewInvitations InterviewInvitation[]
   @@unique([userId, challengeId, repoCommitSha, submissionMode])
 }
 
@@ -200,4 +203,23 @@ model PriQuizRecording {
   credential   Credential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
   @@unique([credentialId, segmentIndex, chunkIndex])
   @@index([credentialId, segmentIndex])
+}
+
+model InterviewInvitation {
+  id             String   @id @default(cuid())
+  recruiterId    String
+  candidateUserId String
+  challengeId    String
+  credentialId   String
+  scheduledAt    DateTime
+  durationMinutes Int
+  meetingLink    String
+  status         String   @default("scheduled")
+  createdAt      DateTime @default(now())
+  recruiter      User @relation("InvitationRecruiter", fields: [recruiterId], references: [id], onDelete: Cascade)
+  candidate      User @relation("InvitationCandidate", fields: [candidateUserId], references: [id], onDelete: Cascade)
+  challenge      Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  credential     Credential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+  @@index([candidateUserId, scheduledAt])
+  @@index([recruiterId, challengeId])
 }
