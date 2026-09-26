@@ -2,6 +2,12 @@
 
 CodeVeritas is an account-backed developer verification platform. It uses a local SQLite database for development; users, challenges, submissions, reviews and GitHub analyses are stored in the database. There are no seeded users or demo credentials.
 
+| Project overview | Submission index | Technical docs | Setup | AI disclosure | Templates |
+|---|---|---|---|---|---|
+| [Architecture](./docs/architecture.md) · [Constraints](./docs/constraints.md) · [Limitations](./docs/limitations.md) | [Resource index](./resource.md) | [Architecture](./docs/architecture.md) | [Local setup](./docs/setup.md) | [AI usage](./ai.md) | [Resource templates](./resource-templates/) |
+
+**Stack:** Next.js 14, React 18, Prisma, SQLite for local development, GitHub API, and Gemini for repository/video-grounded evaluation.
+
 ## Start locally
 
 1. Install Node.js 18 or later.

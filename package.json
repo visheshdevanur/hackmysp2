@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "db:setup": "node scripts/init-sqlite.mjs",
+    "db:setup": "node src/scripts/init-sqlite.mjs",
     "db:generate": "prisma generate"
   },
   "dependencies": {
