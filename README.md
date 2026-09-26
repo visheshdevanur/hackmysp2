@@ -1,75 +1,106 @@
-# CodeVeritas
+# CodeVeritas — Evidence-backed developer credentials
 
-CodeVeritas is an account-backed developer verification platform. It uses PostgreSQL for users, challenges, submissions, reviews and GitHub analyses. There are no seeded users or demo credentials.
+> HackMysuru submission · Team **Code Breakers** · Team ID **TEAM-CB001**
 
-| Project overview | Submission index | Technical docs | Setup | AI disclosure | Templates |
-|---|---|---|---|---|---|
-| [Architecture](./docs/architecture.md) · [Constraints](./docs/constraints.md) · [Limitations](./docs/limitations.md) | [Resource index](./resource.md) | [Architecture](./docs/architecture.md) | [Local setup](./docs/setup.md) | [AI usage](./ai.md) | [Resource templates](./resource-templates/) |
+| Submission guide | Details |
+|---|---|
+| Submission index | [resource.md](./resource.md) |
+| AI disclosure | [ai.md](./ai.md) |
+| Architecture | [docs/architecture.md](./docs/architecture.md) |
+| Trust and evidence constraints | [docs/constraints.md](./docs/constraints.md) |
+| Setup and run | [docs/setup.md](./docs/setup.md) |
+| Limitations and roadmap | [docs/limitations.md](./docs/limitations.md) |
+| Presentation, video, decision log guides | [resource-templates/](./resource-templates/) |
 
-**Stack:** Next.js 14, React 18, Prisma, PostgreSQL, GitHub API, and Gemini for repository/video-grounded evaluation.
+## 1. Problem Understanding
 
-## Start locally
+**Chosen sub-problem:** Trustworthy verification of practical software engineering skills.
 
-1. Install Node.js 18 or later.
-2. Run `npm install`.
-3. Copy `.env.example` to `.env` and set PostgreSQL `DATABASE_URL` (pooled), `DIRECT_URL` (direct), and a private `NEXTAUTH_SECRET`. Keep `.env` local; it contains secrets.
-4. Run `npm run db:generate` and `npm run db:migrate:deploy`.
-5. Run `npm run dev`, then open http://localhost:3000.
-6. Register your student account at `/register` and sign in at `/login`.
+Hiring teams often have to infer practical ability from self-reported résumés, interviews, and disconnected project links. Candidates need a way to show work with context; reviewers and recruiters need evidence they can inspect and compare.
 
-The checked-in PostgreSQL migration creates the schema on a new database. `DIRECT_URL` is used for migrations and `DATABASE_URL` for app queries. Production builds apply pending migrations before building.
+The product addresses this by tying challenge results to a public repository, a recorded work session, a repository-grounded quiz, a speaking assessment, and independent human reviews. It does not claim to prove who authored every line of code.
 
-## Three account roles
+## 2. Target Users & Context
 
-- **Student**: register directly, submit a public GitHub repository URL against an active challenge, complete its repository-grounded PRI quiz, and earn a credential after two independent reviews.
-- **Reviewer**: select Reviewer during registration and supply an invitation code. Review submissions against five weighted rubric dimensions. A reviewer cannot assess their own submission or review it twice.
-- **Recruiter**: select Recruiter, enter a company and supply an invitation code. Publish challenges and search students only after they earn verified credentials.
+| User | Situation | Need |
+|---|---|---|
+| Developer applying for a role | Has projects and challenge work spread across repositories and applications | A shareable, evidence-linked record of completed challenges and assessments |
+| Independent reviewer | Must assess a submission consistently and avoid conflicts | A review queue, common rubric, repository/session context, and clear evidence |
+| Recruiter | Needs to find candidates for a role and compare relevant work | Candidate profiles, challenge scores, CodePassports, comparisons, and interview scheduling |
 
-Set `REVIEWER_INVITE_CODE` and `RECRUITER_INVITE_CODE` in `.env` before creating those accounts. These role gates are server-side; choosing a role in the form does not grant access without the matching code. Accounts are not pre-created because no real names, emails or passwords were provided.
+The current MVP is a web application. It assumes a supported desktop browser and an internet connection for account, GitHub, AI, and recording workflows. A Mysuru-specific hiring pilot and local user research have not yet been conducted.
 
-## Public repository quiz and AI provider
+## 3. Solution Overview
 
-Recruiters define each job’s technical or non-technical field, experience level, responsibilities, skills, work arrangement, employment details, and optional compensation and qualifications. They configure a PRI quiz of 1–50 questions, allocating each question to GitHub/recording-grounded AI, job/role AI, or a recruiter-authored question with four options and an answer key. Allocations must add up to the total. The server validates recruiter questions and generates only the configured AI groups. Repository-grounded answers cite exact source quotes; timed submissions can also cite observable recording evidence. Questions are shuffled and delivered one at a time. Developers never receive the answer key before completing the quiz; recruiters and reviewers can see the setup and results.
+CodeVeritas turns challenge participation into a reviewable technical profile. Recruiters publish role-specific challenges; developers submit public repositories and can complete recorded work, repository understanding, and speaking assessments; independent reviewers score submissions; verified results appear in a shareable CodePassport.
 
-Students submit a public GitHub URL; GitHub OAuth is not required for challenge submissions. The server pins the repository revision and reads a small bounded set of README/source/config/test files without running them. AI-generated-code detection is not performed.
+Core flow:
 
-Create a Gemini API key in [Google AI Studio](https://aistudio.google.com/apikey) and add it to the local `.env` file (never commit or paste it into chat):
+1. Recruiter publishes a role-specific challenge and configures its PRI question sources.
+2. Developer submits a public GitHub repository and, optionally, completes the timed recorded challenge.
+3. The platform collects repository and assessment evidence; AI generates evidence-grounded analysis and quiz questions where configured.
+4. Two distinct reviewers assess the submission with the shared rubric.
+5. The verified credential and available scores appear in the developer’s CodePassport and recruiter discovery views.
 
-```env
-GEMINI_API_KEY="your-server-side-api-key"
-GEMINI_MODEL="gemini-3.5-flash-lite"
-GEMINI_FALLBACK_MODEL="gemini-3.1-flash-lite"
+Screenshots: add 2–4 real screenshots to [`docs/images/`](./docs/images/) and caption what each demonstrates. No demo screenshots are committed yet.
+
+## 4. Architecture
+
+Next.js serves the authenticated web application and API routes. Prisma persists accounts, challenges, submissions, reviews, assessments, and interview invitations. GitHub’s API supplies public repository activity; Gemini provides configured repository, recording, quiz, and speaking analysis.
+
+See [the architecture document](./docs/architecture.md) for the diagram, data model, APIs, and data flow.
+
+## 5. Tech Stack & AI Usage
+
+**Stack:** Next.js 14, React 18, Prisma, SQLite for the current local configuration, GitHub REST API, and Google Gemini API. The project also contains a PostgreSQL migration artifact; see the database configuration note in [setup](./docs/setup.md) before using migrations or changing deployment databases.
+
+AI tools were used during development. At runtime, Gemini analyzes configured repository and recording evidence and can generate challenge quiz and speaking prompts. In-browser face presence checks use MediaPipe Tasks Vision when the model and CDN are reachable. AI output supports human review and does not make a hiring decision. Full disclosure is in [ai.md](./ai.md).
+
+## 6. Decision Log (Summary)
+
+- **Chosen:** Connect scores to concrete challenge, repository, recording, and reviewer evidence.
+- **Alternative considered:** Rank candidates from profile claims or activity counts alone.
+- **Trade-off:** Evidence takes longer to collect and requires reviewer effort, but each result has inspectable context. Public GitHub activity is treated as an activity signal, not proof of code quality or authorship.
+- **First scaling pressure:** Reviewer throughput and AI/GitHub provider quotas; the current app has no queueing or service-level guarantees.
+
+See [resource.md](./resource.md) for the submission index and [resource-templates/decision-log-template.md](./resource-templates/decision-log-template.md) for the full decision-log format.
+
+## 7. Setup & Run
+
+```bash
+git clone https://github.com/visheshdevanur/hackmysp2.git
+cd hackmysp2
+npm install
 ```
 
-Gemini 3.5 Flash-Lite supports structured output and currently offers free input and output tokens on the AI Studio free tier, subject to model availability and rate limits. Google states that free-tier content may be used to improve its products, so use this only with public repositories and avoid sending secrets or private source. Paid usage requires a billing-enabled Google project; the app does not enable billing for you. An optional `GITHUB_TOKEN` raises GitHub API rate limits. Restart the dev server after changing `.env`.
+Copy `.env.example` to `.env`, add a private `NEXTAUTH_SECRET` and `GEMINI_API_KEY`, then run:
 
-The quiz score feeds the existing 40% PRI correctness component, with other weights unchanged. Quiz scores count toward the displayed PRI after the related credential is independently verified. Two human reviews remain required to verify a credential.
+```bash
+npm run db:generate
+npm run db:setup
+npm run dev
+```
 
-PRI quizzes run as monitored attempts: the developer consents to full-monitor screen, camera and microphone recording, then answers one question at a time. The server records per-question elapsed time. Leaving the quiz tab, reloading an active attempt, or stopping required capture immediately fails and locks the attempt; reviewer and recruiter dashboards show the integrity event, timings and saved recording. AI tools are prohibited by the quiz rules. The app detects a browser tab becoming hidden; it cannot detect use of AI on a separate device or prove that no AI assistance occurred.
+Open `http://localhost:3000`. More details and environment variables are in [docs/setup.md](./docs/setup.md). There are no seeded demo accounts; register accounts with the appropriate invitation codes for reviewer or recruiter roles.
 
-## Current product behavior
+## 8. Known Limitations
 
-- Passwords are bcrypt-hashed; sessions use signed JWT cookies through NextAuth.
-- Challenge, repository submission and reviewer rubric flows persist to PostgreSQL.
-- Public CodePassport and credential verification pages query persisted records.
-- A credential is marked verified after two distinct reviewer accounts submit scores.
-- CodePrint activity indicators are derived from GitHub repositories, languages and commit history. They are behavioral observations, not code-quality claims.
-- The PRI formula is shown with component weights. The repository quiz measures project understanding, not AI authorship or automated test correctness.
-- Empty accounts show empty states. There are no invented users, candidates, challenges or scores.
+- A credential requires two distinct human reviews; results remain pending until then.
+- PRI is a fixed weighted formula, not an adaptive skill model. It has no uncertainty interval or fairness audit.
+- GitHub activity and AI analysis are evidence signals, not proof of authorship, code correctness, or job performance.
+- The application requires network access. Recording uploads use local disk in development; production needs durable private object storage and retention controls.
 
-## Production deployment
+See [docs/limitations.md](./docs/limitations.md) for edge cases and next steps.
 
-Before a public launch, create a production GitHub OAuth app if GitHub sign-in is enabled, set a private `NEXTAUTH_SECRET` and invitation codes, configure durable object storage for recordings, and deploy behind HTTPS. Email verification, password recovery, rate limiting, automated test execution and production reviewer assignment still need to be configured before opening registration broadly.
+## Team
 
-## Solo timed challenge sessions
+| Name | Role | GitHub |
+|---|---|---|
+| Vishesh G Devanur — confirm team membership/lead | Project details to confirm | [@visheshdevanur](https://github.com/visheshdevanur) |
+| Add remaining team members | Add roles | Add handles |
 
-Recruiters can publish challenges with a 15–180 minute limit. A developer can start the optional solo session from the challenge card, explicitly consent, and share a screen with camera and microphone. The browser saves recording segments continuously to `storage/session-recordings/`; closing the tab, signing out, pausing capture, or losing the shared screen pauses the timer and keeps the uploaded segments. Resuming the same challenge continues from saved elapsed time. Submitting a public GitHub URL sends the repository source plus recorded segments to Gemini for an evidence-grounded coaching report and PRI quiz. AI tools are permitted; the feature does not assess AI authorship. Recruiters can open submissions from their challenge card; reviewers can see recordings in the review queue. AI reports support human review and do not make hiring decisions.
+**College(s):** Add the participating college name(s).
 
-Recording requires a browser with `getDisplayMedia`, `MediaRecorder`, camera, and microphone access (latest Chrome/Edge recommended). Keep `GEMINI_API_KEY` server-side; set `GEMINI_VIDEO_MODEL=gemini-3.5-flash-lite` if you want to override the default. Gemini free-tier model availability and rate limits can change. The recording files are stored on the application server's local disk in development. A multi-instance production deployment must use durable private object storage and configure retention/deletion policies before launch; recordings contain sensitive personal data. Participants must provide explicit consent before capture.
+## License
 
-PRI quiz recordings are stored in `storage/session-recordings/pri-quiz/` in development and are served only to the candidate, the challenge's recruiter, or a reviewer account. Deployments should migrate these files to private durable storage and define retention/deletion policies before recording real candidates.
-
-## Monitored speaking round
-
-After a completed PRI quiz, candidates have up to seven minutes for a recorded speaking round. Gemini generates a role/job-description question, followed by a company-contribution question. Candidates answer aloud, select Ask next question, then Submit. Screen, camera and microphone recordings are sent to Gemini for transcription and assessment of role knowledge, relevance, clarity and organization. The developer, reviewer and challenge recruiter can view the transcript, scores, timings and recordings. Switching away from the tab or interrupting capture automatically locks the attempt. AI tools are prohibited; the app cannot detect assistance from a separate device. Candidate consent is required before recording.
-
+No license has been selected yet. All rights remain with the project owners unless a license is added.
