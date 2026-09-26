@@ -1,23 +1,23 @@
 # CodeVeritas
 
-CodeVeritas is an account-backed developer verification platform. It uses a local SQLite database for development; users, challenges, submissions, reviews and GitHub analyses are stored in the database. There are no seeded users or demo credentials.
+CodeVeritas is an account-backed developer verification platform. It uses PostgreSQL for users, challenges, submissions, reviews and GitHub analyses. There are no seeded users or demo credentials.
 
 | Project overview | Submission index | Technical docs | Setup | AI disclosure | Templates |
 |---|---|---|---|---|---|
 | [Architecture](./docs/architecture.md) · [Constraints](./docs/constraints.md) · [Limitations](./docs/limitations.md) | [Resource index](./resource.md) | [Architecture](./docs/architecture.md) | [Local setup](./docs/setup.md) | [AI usage](./ai.md) | [Resource templates](./resource-templates/) |
 
-**Stack:** Next.js 14, React 18, Prisma, SQLite for local development, GitHub API, and Gemini for repository/video-grounded evaluation.
+**Stack:** Next.js 14, React 18, Prisma, PostgreSQL, GitHub API, and Gemini for repository/video-grounded evaluation.
 
 ## Start locally
 
 1. Install Node.js 18 or later.
 2. Run `npm install`.
-3. Copy `.env.example` to `.env` and set a private `NEXTAUTH_SECRET`. Keep `.env` local; it contains secrets. Set `DATABASE_URL=file:./dev.db` for local SQLite development.
-4. Run `npm run db:generate` and `npx prisma db push`.
+3. Copy `.env.example` to `.env` and set PostgreSQL `DATABASE_URL` (pooled), `DIRECT_URL` (direct), and a private `NEXTAUTH_SECRET`. Keep `.env` local; it contains secrets.
+4. Run `npm run db:generate` and `npm run db:migrate:deploy`.
 5. Run `npm run dev`, then open http://localhost:3000.
 6. Register your student account at `/register` and sign in at `/login`.
 
-Local SQLite file: `prisma/dev.db` (ignored by Git). `npm run db:setup` creates an empty database from the checked-in SQL schema and leaves an existing database untouched.
+The checked-in PostgreSQL migration creates the schema on a new database. `DIRECT_URL` is used for migrations and `DATABASE_URL` for app queries. Production builds apply pending migrations before building.
 
 ## Three account roles
 
@@ -50,7 +50,7 @@ PRI quizzes run as monitored attempts: the developer consents to full-monitor sc
 ## Current product behavior
 
 - Passwords are bcrypt-hashed; sessions use signed JWT cookies through NextAuth.
-- Challenge, repository submission and reviewer rubric flows persist to SQLite.
+- Challenge, repository submission and reviewer rubric flows persist to PostgreSQL.
 - Public CodePassport and credential verification pages query persisted records.
 - A credential is marked verified after two distinct reviewer accounts submit scores.
 - CodePrint activity indicators are derived from GitHub repositories, languages and commit history. They are behavioral observations, not code-quality claims.
@@ -59,7 +59,7 @@ PRI quizzes run as monitored attempts: the developer consents to full-monitor sc
 
 ## Production deployment
 
-Before a public launch, configure a PostgreSQL `DATABASE_URL`, create a production GitHub OAuth app, set a private `NEXTAUTH_SECRET` and invitation codes, run `npx prisma migrate deploy`, and deploy behind HTTPS. Update the datasource provider and generate a PostgreSQL migration when moving off local SQLite. Email verification, password recovery, rate limiting, automated test execution and production reviewer assignment still need to be configured before opening registration broadly.
+Before a public launch, create a production GitHub OAuth app if GitHub sign-in is enabled, set a private `NEXTAUTH_SECRET` and invitation codes, configure durable object storage for recordings, and deploy behind HTTPS. Email verification, password recovery, rate limiting, automated test execution and production reviewer assignment still need to be configured before opening registration broadly.
 
 ## Solo timed challenge sessions
 

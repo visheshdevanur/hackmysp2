@@ -25,7 +25,8 @@ cp .env.example .env
 
 | Variable | Required | Example | Purpose |
 |---|---|---|---|
-| `DATABASE_URL` | Yes | `<...>` | `<...>` |
+| `DATABASE_URL` | Yes | PostgreSQL pooled connection URL | PostgreSQL pooled connection URL |
+| `DIRECT_URL` | Yes | PostgreSQL direct connection URL | PostgreSQL direct connection URL |
 | `<API_KEY>` | `<No>` | `<...>` | `<...>` |
 
 > Never commit real secrets. Commit only `.env.example`.
