@@ -1,6 +1,6 @@
 # HackMysuru Submission Index — CodeVeritas
 
-> Reviewer entry point. Replace the remaining **[TO ADD]** fields with verified team and submission information before handing this repository to judges. Do not publish secrets or candidate recordings in public links.
+> Reviewer entry point for the CodeVeritas HackMysuru submission. Do not publish passwords, API keys, or candidate recordings in public links.
 
 ## 1. Team Details
 
@@ -8,14 +8,26 @@
 |---|---|
 | Team ID | `TEAM-CB001` |
 | Team name | `Code Breakers` |
-| College(s) | **[TO ADD: participating college name(s)]** |
-| Team leader | **[TO ADD: confirm name, email, and phone]** |
+| College(s) | Maharaja Institute of Technology Mysore |
+| Team leader | Not specified |
 | Repository | https://github.com/visheshdevanur/hackmysp2 |
 
 | # | Member | Program and year | GitHub | Primary role |
 |---|---|---|---|---|
-| 1 | **[TO ADD: confirm Vishesh G Devanur and lead status]** | **[TO ADD]** | [@visheshdevanur](https://github.com/visheshdevanur) | **[TO ADD]** |
-| 2+ | **[TO ADD: remaining team members, if any]** | **[TO ADD]** | **[TO ADD]** | **[TO ADD]** |
+| 1 | Bhavish S | 3rd year | [@Bhavish-S](https://github.com/Bhavish-S) | Team member |
+| 2 | Vishesh G Devanur | 3rd year | [@visheshdevanur](https://github.com/visheshdevanur) | Team member |
+| 3 | Varshith V | 3rd year | [@4mh24cs167-tech](https://github.com/4mh24cs167-tech) | Team member |
+| 4 | Yashavanth B N | 3rd year | [@bnyashavanth-pro](https://github.com/bnyashavanth-pro) | Team member |
+
+### Local demo account roles
+
+These are local test account email addresses only. Passwords are intentionally excluded from this public repository; share credentials through a private channel and rotate any password that has already been disclosed.
+
+| Application role | Login email |
+|---|---|
+| Developer | `4mh24cs174a@gmail.com` |
+| Reviewer | `4mh24cs167@gmail.com` |
+| Recruiter | `4mh24cs181@gmail.com` |
 
 ## 2. What We Built
 
@@ -37,13 +49,15 @@
 
 ## 4. Submission Artifacts
 
-Upload each required artifact to the destination specified by the event organizers and test viewer access. No artifact links or hashes were provided when this index was prepared.
+Upload each required artifact to the destination specified by the event organizers and test viewer access. The presentation link below was supplied by the team; the file itself was not available in the repository to calculate its checksum.
 
 | # | Artifact | Link | File name | SHA-256 first 16 chars |
 |---|---|---|---|---|
-| 1 | Pitch and code walkthrough video | **[TO ADD: approved share link]** | **[TO ADD]** | **[TO ADD after final upload]** |
-| 2 | Decision log PDF | **[TO ADD: approved share link]** | **[TO ADD]** | **[TO ADD after final upload]** |
-| 3 | Presentation PDF | **[TO ADD: approved share link]** | **[TO ADD]** | **[TO ADD after final upload]** |
+| 1 | Pitch and code walkthrough video | Not provided | Not provided | Pending |
+| 2 | Decision log PDF | Not provided | Not provided | Pending |
+| 3 | Presentation PDF | [Open TEAM-CB001.pdf](https://drive.google.com/file/d/1KDC-XrvcKj0Fg2zqthBgzMFZHBfEHRKg/view?usp=sharing) | `TEAM-CB001.pdf` | `A6063A877C707EA4` |
+
+Full SHA-256 for `TEAM-CB001.pdf`: `A6063A877C707EA4ADE5A0FC9C57365EC091A4E17F6517575C3413002BAED0BF`.
 
 Use the matching guides in [`resource-templates/`](./resource-templates/). Hash the final uploaded files; regenerate hashes if files change.
 
@@ -51,10 +65,11 @@ Use the matching guides in [`resource-templates/`](./resource-templates/). Hash 
 
 | Field | Value |
 |---|---|
-| Live URL | **[TO ADD: confirm an active public deployment; local development is not a live URL]** |
+| Local development URL | [http://localhost:3001/login](http://localhost:3001/login) (only accessible on the developer's machine while the app is running) |
+| Public live URL | Not provided |
 | Platform | Web application |
-| Test login | **[TO ADD: create safe reviewer/demo accounts; do not commit passwords here unless the event explicitly requires public test credentials]** |
-| Sample data | No seeded demo data; use team-created test accounts and repositories |
+| Test logins | Developer `4mh24cs174a@gmail.com`; Reviewer `4mh24cs167@gmail.com`; Recruiter `4mh24cs181@gmail.com` (request access from the team; passwords are not stored here) |
+| Sample data | The local development database contains sample records, but is git-ignored and is not included in a fresh clone. No seed script or public demo dataset is checked in. Local recordings are also excluded from Git. |
 | If the live link is down | Follow [local setup](./docs/setup.md) |
 
 ## 6. Quick Reviewer Path
@@ -75,4 +90,4 @@ This path requires appropriately configured local accounts and provider keys. It
 - [ ] Live URL and reviewer path tested, or local fallback instructions verified.
 - [ ] Team reviewed the limitations and can explain the assessment/scoring workflow.
 
-**Submitted by:** **[TO ADD: team lead]** · **Date/time:** **[TO ADD]**
+**Submitted by:** Code Breakers · **Date:** 2026-09-27

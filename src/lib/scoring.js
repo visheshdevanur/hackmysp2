@@ -10,6 +10,17 @@ export function calculatePRI({ correctness = 0, review = 0, timeliness = 0, lear
   return { score: Math.round(Object.values(breakdown).reduce((a, b) => a + b, 0)), breakdown };
 }
 
+// Overall correctness includes every completed PRI quiz. Peer-review and the
+// other evidence-based dimensions remain limited to verified credentials.
+export function calculateUserPRI(credentials = []) {
+  const verified = credentials.filter(item => item.isVerified);
+  const completedQuizzes = credentials.filter(item => Number.isInteger(item.quizScore) && (item.quizAttemptStatus === 'completed' || item.quizSubmittedAt));
+  if (!completedQuizzes.length && !verified.length) return { score: null, breakdown: null, quizCount: 0 };
+  const average = key => verified.length ? verified.reduce((sum, item) => sum + (Number(item[key]) || 0), 0) / verified.length : 0;
+  const correctness = completedQuizzes.length ? priCorrectness(completedQuizzes) : priCorrectness(verified);
+  return { ...calculatePRI({ correctness, review: average('reviewerScore'), timeliness: average('timeliness'), learning: average('learningVelocity'), skillMatch: average('skillMatch') }), quizCount: completedQuizzes.length };
+}
+
 export function calculateCredentialPRI(credential) {
   if (!credential?.isVerified) return { score: null, breakdown: null, status: 'Awaiting two independent reviews' };
   const result = calculatePRI({

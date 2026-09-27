@@ -96,10 +96,14 @@ See [docs/limitations.md](./docs/limitations.md) for edge cases and next steps.
 
 | Name | Role | GitHub |
 |---|---|---|
-| Vishesh G Devanur — confirm team membership/lead | Project details to confirm | [@visheshdevanur](https://github.com/visheshdevanur) |
-| Add remaining team members | Add roles | Add handles |
+| Bhavish S | Team member | [@Bhavish-S](https://github.com/Bhavish-S) |
+| Vishesh G Devanur | Team member | [@visheshdevanur](https://github.com/visheshdevanur) |
+| Varshith V | Team member | [@4mh24cs167-tech](https://github.com/4mh24cs167-tech) |
+| Yashavanth B N | Team member | [@bnyashavanth-pro](https://github.com/bnyashavanth-pro) |
 
-**College(s):** Add the participating college name(s).
+**Program/year:** All listed members are in 3rd year.
+
+**College:** Maharaja Institute of Technology Mysore.
 
 ## License
 

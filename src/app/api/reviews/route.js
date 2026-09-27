@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { currentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { scoreReview, calculatePRI, priCorrectness } from '@/lib/scoring';
+import { scoreReview, calculateUserPRI } from '@/lib/scoring';
 import { credentialForClient } from '@/lib/repo-quiz';
 import { challengeForClient } from '@/lib/challenge-data';
 import { rankChallengeCredentials } from '@/lib/challenge-scores';
@@ -46,9 +46,8 @@ export async function POST(request) {
     const verified = allReviews.length >= 2;
     const updated = await prisma.credential.update({ where: { id: credential.id }, data: { reviewerScore, peerReviewAvg: reviewerScore / 20, isVerified: verified } });
     if (verified) {
-      const verifiedCredentials = await prisma.credential.findMany({ where: { userId: credential.userId, isVerified: true } });
-      const avg = (key) => verifiedCredentials.length ? verifiedCredentials.reduce((s, item) => s + item[key], 0) / verifiedCredentials.length : 0;
-      const pri = calculatePRI({ correctness: priCorrectness(verifiedCredentials), review: avg('reviewerScore'), timeliness: avg('timeliness'), learning: avg('learningVelocity'), skillMatch: avg('skillMatch') });
+      const credentials = await prisma.credential.findMany({ where: { userId: credential.userId } });
+      const pri = calculateUserPRI(credentials);
       await prisma.user.update({ where: { id: credential.userId }, data: { priScore: pri.score, isVerified: true } });
     }
     return NextResponse.json({ review, credential: updated, verified }, { status: 201 });

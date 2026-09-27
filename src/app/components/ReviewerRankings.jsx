@@ -14,7 +14,7 @@ export default function ReviewerRankings({ role }) {
 
   return <section className="real-panel challenge-rankings">
     <h2>Challenge rankings</h2>
-    <p className="real-muted">Each challenge has its own leaderboard. Candidates are sorted by provisional overall score; scores become final when all four assessment components are available.</p>
+    <p className="real-muted">Each job challenge has its own leaderboard, ordered by overall job score from highest to lowest. Incomplete scores are provisional; equal scores use submission time.</p>
     {groups.map(group => {
       const scored = group.entries.filter(entry => entry.rank).length;
       return <details key={group.challenge.id}>

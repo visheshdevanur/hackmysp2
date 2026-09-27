@@ -32,7 +32,10 @@ export function challengeScoreBreakdown(credential, reviewCount = 0) {
       speaking: speakingFailed ? 'failed' : speakingComplete ? 'completed' : credential?.speakingStatus === 'analysis_failed' ? 'analysis_failed' : credential?.speakingStatus === 'in_progress' || credential?.speakingStatus === 'analyzing' ? 'in_progress' : 'pending',
     },
   };
-  const available = Object.values(scores).filter(score => score !== null);
+  // Only the four assessment dimensions contribute to the overall score.
+  // Review counts and status metadata are display fields, not scores.
+  const assessmentKeys = ['share', 'github', 'pri', 'speaking'];
+  const available = assessmentKeys.map(key => scores[key]).filter(score => score !== null);
   return {
     ...scores,
     overall: available.length ? Math.round(available.reduce((sum, score) => sum + score, 0) / available.length) : null,
@@ -43,11 +46,22 @@ export function challengeScoreBreakdown(credential, reviewCount = 0) {
 }
 
 export function rankChallengeCredentials(rows) {
-  return rows
+  const ranked = rows
     .map(row => ({ ...row, scores: challengeScoreBreakdown(row, row.reviews?.length || 0) }))
-    .sort((a, b) => (b.scores.overall ?? -1) - (a.scores.overall ?? -1) || Number(b.scores.complete) - Number(a.scores.complete) || new Date(a.createdAt) - new Date(b.createdAt))
-    .map(row => ({ ...row, rank: row.scores.overall == null ? null : rows.filter(item => {
-      const itemScores = challengeScoreBreakdown(item, item.reviews?.length || 0);
-      return itemScores.overall != null && itemScores.overall > row.scores.overall;
-    }).length + 1 }));
+    .sort((a, b) => {
+      const aScore = a.scores.overall;
+      const bScore = b.scores.overall;
+      if (aScore == null && bScore != null) return 1;
+      if (aScore != null && bScore == null) return -1;
+      if (aScore != null && bScore != null && aScore !== bScore) return bScore - aScore;
+      // A stable tie-break keeps ordinal ranks consistent when overall scores match.
+      return new Date(a.createdAt) - new Date(b.createdAt)
+        || String(a.user?.name || a.user?.githubUsername || '').localeCompare(String(b.user?.name || b.user?.githubUsername || ''));
+    });
+  let nextRank = 0;
+  return ranked.map(row => {
+    if (row.scores.overall == null) return { ...row, rank: null };
+    nextRank += 1;
+    return { ...row, rank: nextRank };
+  });
 }

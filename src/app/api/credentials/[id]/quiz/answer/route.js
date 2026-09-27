@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { currentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { calculatePRI, priCorrectness } from '@/lib/scoring';
+import { calculateUserPRI } from '@/lib/scoring';
 
 function parseJson(value, fallback) { try { return JSON.parse(value || ''); } catch { return fallback; } }
 function questionsInAttemptOrder(questions, attempt) {
@@ -44,11 +44,10 @@ export async function POST(request, { params }) {
       data: { quizAnswers: JSON.stringify(answers), quizAttemptDataJson: JSON.stringify(nextAttempt), ...(complete ? { quizAttemptStatus: 'completed', quizAttemptFinishedAt: now, quizSubmittedAt: now, quizScore: score } : {}) },
     });
     if (saved.count !== 1) return NextResponse.json({ error: 'The quiz attempt changed. Refresh to see its saved status.' }, { status: 409 });
-    if (complete && credential.isVerified) {
-      const verified = await prisma.credential.findMany({ where: { userId: credential.userId, isVerified: true } });
-      const average = key => verified.length ? verified.reduce((sum, item) => sum + item[key], 0) / verified.length : 0;
-      const pri = calculatePRI({ correctness: priCorrectness(verified), review: average('reviewerScore'), timeliness: average('timeliness'), learning: average('learningVelocity'), skillMatch: average('skillMatch') });
-      await prisma.user.update({ where: { id: credential.userId }, data: { priScore: pri.score } });
+    if (complete) {
+      const credentials = await prisma.credential.findMany({ where: { userId: credential.userId } });
+      const pri = calculateUserPRI(credentials);
+      if (pri.score != null) await prisma.user.update({ where: { id: credential.userId }, data: { priScore: pri.score } });
     }
     return NextResponse.json(complete ? result(questions, answers, score, nextAttempt, 'completed') : { status: 'in_progress', currentQuestionIndex: questionIndex + 1, questionTimings: timings });
   } catch (error) {
