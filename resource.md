@@ -9,7 +9,7 @@
 | Team ID | `TEAM-CB001` |
 | Team name | `Code Breakers` |
 | College(s) | Maharaja Institute of Technology Mysore |
-| Team leader | Not specified |
+| Team leader | Bhavish S |
 | Repository | https://github.com/visheshdevanur/hackmysp2 |
 
 | # | Member | Program and year | GitHub | Primary role |
