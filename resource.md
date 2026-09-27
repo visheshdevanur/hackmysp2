@@ -85,11 +85,11 @@ This path requires appropriately configured local accounts and provider keys. It
 
 ## 7. Declaration Checklist
 
-- [ ] Team membership, college(s), roles, and contact details confirmed.
-- [ ] Video, decision log, and presentation links open for the intended reviewers.
-- [ ] Final artifact names and SHA-256 hashes recorded.
-- [ ] `ai.md` includes all tools used by every team member and accurate runtime AI behavior.
-- [ ] Live URL and reviewer path tested, or local fallback instructions verified.
-- [ ] Team reviewed the limitations and can explain the assessment/scoring workflow.
+- [x] Team membership, college(s), roles, and contact details confirmed.
+- [x] Video, decision log, and presentation links open for the intended reviewers.
+- [x] Final artifact names and SHA-256 hashes recorded.
+- [x] `ai.md` includes all tools used by every team member and accurate runtime AI behavior.
+- [x] Live URL and reviewer path tested, or local fallback instructions verified.
+- [x] Team reviewed the limitations and can explain the assessment/scoring workflow.
 
 **Submitted by:** Code Breakers · **Date:** 2026-09-27
