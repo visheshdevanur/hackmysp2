@@ -4,7 +4,7 @@
 
 This disclosure describes the current implementation and the work on this repository. Update the model/tool names and team acknowledgments before final submission if other members used additional tools.
 
-## Summary
+
 
 | Question | Answer |
 |---|---|
