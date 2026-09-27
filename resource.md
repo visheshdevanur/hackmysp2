@@ -53,13 +53,15 @@ Upload each required artifact to the destination specified by the event organize
 
 | # | Artifact | Link | File name | SHA-256 first 16 chars |
 |---|---|---|---|---|
-| 1 | Pitch and code walkthrough video | Not provided | Not provided | Pending |
+| 1 | Pitch and code walkthrough video | [Open CodeVeritas.mp4](https://drive.google.com/file/d/18SVSbZ67DlUBHEIxP-ddlXVMvUlOJWXB/view?usp=sharing) | `CodeVeritas.mp4` | `11E2319BA247147B` |
 | 2 | Decision log PDF | [Open decision log PDF](https://drive.google.com/file/d/1M2fwFx56VFZTCK9xDZZAbG4C6LHCY8-w/view?usp=sharing) | `TEAM-CB001_decision-log.pdf` | `34AB9B985DB7950F` |
 | 3 | Presentation PDF | [Open TEAM-CB001.pdf](https://drive.google.com/file/d/1KDC-XrvcKj0Fg2zqthBgzMFZHBfEHRKg/view?usp=sharing) | `TEAM-CB001.pdf` | `A6063A877C707EA4` |
 
 Full SHA-256 for `TEAM-CB001.pdf`: `A6063A877C707EA4ADE5A0FC9C57365EC091A4E17F6517575C3413002BAED0BF`.
 
 Full SHA-256 for the supplied `TEAM-CB001_decision-log.pdf`: `34AB9B985DB7950FF17D7109485B3CB5CEED0D7FE963FFDDD1D08C660CA8EE6D`.
+
+Full SHA-256 for the local `CodeVeritas.mp4` supplied for this video: `11E2319BA247147BC412095A18486F9E46A59B42F265587002382F480A875EA2`. This checksum matches the Drive file only if the uploaded file is byte-for-byte identical to the local file.
 
 Use the matching guides in [`resource-templates/`](./resource-templates/). Hash the final uploaded files; regenerate hashes if files change.
 
