@@ -8,8 +8,8 @@
 |---|---|
 | Team ID | `TEAM-CB001` |
 | Team name | `Code Breakers` |
-| College(s) | **[TO ADD: participating college name(s)]** |
-| Team leader | **[TO ADD: confirm name, email, and phone]** |
+| College(s) | 'Maharaja Insitute of Technology Mysore' |
+| Team leader | 'Bhavish S, 4mh24cs017@gmail.com,7349568649' |
 | Repository | https://github.com/visheshdevanur/hackmysp2 |
 
 | # | Member | Program and year | GitHub | Primary role |
