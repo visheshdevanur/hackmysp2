@@ -68,7 +68,7 @@ Use the matching guides in [`resource-templates/`](./resource-templates/). Hash 
 | Local development URL | [http://localhost:3001/login](http://localhost:3001/login) (only accessible on the developer's machine while the app is running) |
 | Public live URL | Not provided |
 | Platform | Web application |
-| Test logins | Developer `4mh24cs174a@gmail.com`; Reviewer `4mh24cs167@gmail.com`; Recruiter `4mh24cs181@gmail.com` (request access from the team; passwords are not stored here) |
+| Test logins | Developer `4mh24cs174a@gmail.com`; Reviewer `4mh24cs167@gmail.com`; Recruiter `4mh24cs181@gmail.com` (request access from the team; passwords for all logins are 1234567890) |
 | Sample data | The local development database contains sample records, but is git-ignored and is not included in a fresh clone. No seed script or public demo dataset is checked in. Local recordings are also excluded from Git. |
 | If the live link is down | Follow [local setup](./docs/setup.md) |
 
